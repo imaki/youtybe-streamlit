@@ -1,23 +1,45 @@
-import streamlit as st
-import numpy as np
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 
-# タイトルを表示する
-st.title("タイトルの表示")
+# フォントの設定（日本語フォントのパスを指定してください）
+font_path = 'C:/Windows/Fonts/MSGOTHIC.TTC'
+fontprop = fm.FontProperties(fname=font_path)
 
-# サンプルのデータフレームを作成する
-df = pd.DataFrame({'A': [1, 2, 3],
-                   'B': [4, 5, 6],
-                   'C': [7, 8, 9]})
+# 株価データの読み込み
+df = pd.read_csv('C:/Users/not/Documents/AMZN 過去データ.csv')
 
-# 追加する四列のデータを作成する
-col_d = [10, 11, 12]
-col_e = [13, 14, 15]
-col_f = [16, 17, 18]
-col_g = [19, 20, 21]
+# データの前処理
+window = 5
+df['SMA'] = df['終値'].rolling(window=window).mean()
+df.dropna(inplace=True)
 
-# データフレームに四列を追加する
-# df = df.assign(D=col_d, E=col_e, F=col_f, G=col_g)
+# 特徴量と目的変数の分割
+X = df[['SMA']]
+y = df['終値']
 
-# データフレームを表示する
-st.write(df)
+# トレーニングデータとテストデータの分割
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# モデルのトレーニング
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# テストデータで予測
+y_pred = model.predict(X_test)
+
+# グラフの作成
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['終値'], label='実測値', linewidth=2)
+plt.plot(X_test.index, y_pred, label='予測値', linewidth=2)
+plt.plot(df.index, df['SMA'], label='単純移動平均線', linewidth=2)
+plt.xlabel('日付', fontproperties=fontprop)
+plt.ylabel('終値', fontproperties=fontprop)
+plt.title('株価予測 - 単純移動平均線', fontproperties=fontprop)
+plt.legend(prop=fontprop)
+
+# グラフの表示
+plt.show()
